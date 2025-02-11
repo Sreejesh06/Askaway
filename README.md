@@ -1,6 +1,8 @@
 # **Askaway**
 
-Welcome to the **Askaway**! This platform is designed to help students connect with their college seniors to ask questions and gain insights about placement interviews, preparation strategies, and career guidance. Seniors can share their experiences, and students can comment and ask follow-up questions.
+Welcome to the **Askaway**! This platform is designed to help students connect with their college seniors to ask questions and gain insights about placement interviews, preparation strategies, and career guidance. Seniors can share their experiences, and students can comment and ask follow-up questions. 
+
+**this platform is only for SECEians and this is the Open Source** 
 
 ---
 
