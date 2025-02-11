@@ -3,17 +3,31 @@ import { useNavigate, Link } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const Login = () => {
+const Signup = () => {
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    if (!phone || !password) {
+  const handleSignup = () => {
+    if (!email || !phone || !password || !confirmPassword) {
       toast.error("All fields are required.");
       return;
     }
-    
+
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
     // Basic phone number validation
     const phoneRegex = /^\d{10}$/;
     if (!phoneRegex.test(phone)) {
@@ -21,14 +35,25 @@ const Login = () => {
       return;
     }
 
-    // If validation passes, navigate to home
-    navigate("/home");
+    // If validation passes, navigate to login
+    navigate("/login");
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white">
       <div className="bg-gray-800 text-white p-8 rounded-lg shadow-xl w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6 text-center">Login</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center">Sign Up</h1>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-1">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter Email Address"
+            className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
         <div className="mb-4">
           <label className="block text-sm font-medium mb-1">Phone Number</label>
@@ -41,28 +66,39 @@ const Login = () => {
           />
         </div>
 
-        <div className="mb-6">
+        <div className="mb-4">
           <label className="block text-sm font-medium mb-1">Password</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter Password"
+            placeholder="Set New Password"
+            className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-1">Confirm Password</label>
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm Password"
             className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <button
-          onClick={handleLogin}
+          onClick={handleSignup}
           className="w-full py-3 bg-blue-500 hover:bg-blue-600 rounded-lg text-lg font-semibold mb-4"
         >
-          Login
+          Sign Up
         </button>
 
         <p className="text-center text-gray-400">
-          Don't have an account?{" "}
-          <Link to="/signup" className="text-blue-400 hover:text-blue-300">
-            Sign up
+          Already have an account?{" "}
+          <Link to="/login" className="text-blue-400 hover:text-blue-300">
+            Login
           </Link>
         </p>
       </div>
@@ -83,4 +119,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Signup;

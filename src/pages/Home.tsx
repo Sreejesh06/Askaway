@@ -13,22 +13,28 @@ const Navigation = () => {
             Home
           </Link>
           <Link 
-            to="/about" 
+            to="/posts" 
             className="text-gray-800 hover:text-blue-600 font-medium"
           >
-            About
+            Posts
           </Link>
           <Link 
-            to="/Profile" 
+            to="/search" 
+            className="text-gray-800 hover:text-blue-600 font-medium"
+          >
+            Search
+          </Link>
+          <Link 
+            to="/profile" 
             className="text-gray-800 hover:text-blue-600 font-medium"
           >
             Profile
           </Link>
           <Link 
-            to="/comments" 
+            to="/about" 
             className="text-gray-800 hover:text-blue-600 font-medium"
           >
-            Comments
+            About
           </Link>
         </div>
       </div>
