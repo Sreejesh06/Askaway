@@ -10,33 +10,54 @@ const Signup = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (!email || !phone || !password || !confirmPassword) {
       toast.error("All fields are required.");
       return;
     }
-
+  
     if (password !== confirmPassword) {
       toast.error("Passwords do not match.");
       return;
     }
-
-    // Basic email validation
+  
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       toast.error("Please enter a valid email address.");
       return;
     }
-
-    // Basic phone number validation
+  
     const phoneRegex = /^\d{10}$/;
     if (!phoneRegex.test(phone)) {
       toast.error("Please enter a valid 10-digit phone number.");
       return;
     }
-
-    // If validation passes, navigate to login
-    navigate("/login");
+  
+    try {
+      const response = await fetch("http://localhost:8080/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          phone,
+          password,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        toast.success("Signup successful! Redirecting to login...");
+        setTimeout(() => navigate("/login"), 2000);
+      } else {
+        toast.error(data.message || "Signup failed.");
+      }
+    } catch (error) {
+      console.error("Error signing up:", error);
+      toast.error("Something went wrong. Please try again.");
+    }
   };
 
   return (
