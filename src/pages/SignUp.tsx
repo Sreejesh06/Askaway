@@ -21,9 +21,9 @@ const Signup = () => {
       return;
     }
   
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\s@]+@sece\.ac\.in$/;
     if (!emailRegex.test(email)) {
-      toast.error("Please enter a valid email address.");
+      toast.error("Email must end with @sece.ac.in.");
       return;
     }
   
