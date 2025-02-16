@@ -4,16 +4,22 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
+interface SignupResponse {
+  message: string;
+  otp?: string;
+  error?: string;
+}
+
 const Signup = () => {
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [email, setEmail] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const navigate = useNavigate();
 
-  const handleSignup = async () => {
+  const handleSignup = async (): Promise<void> => {
     if (!email || !phone || !password || !confirmPassword) {
       toast.error("All fields are required.");
       return;
@@ -49,18 +55,25 @@ const Signup = () => {
         }),
       });
 
-      const data = await response.json();
+      const data: SignupResponse = await response.json();
 
       if (response.ok) {
-        toast.success("Signup successful! Redirecting to login...");
-        setTimeout(() => navigate("/"), 2000);
+        toast.success("OTP sent successfully! Please verify your email.");
+        navigate('/verify-otp', { state: { email } });
       } else {
-        toast.error(data.message || "Signup failed.");
+        toast.error(data.error || "Signup failed.");
       }
     } catch (error) {
       console.error("Error signing up:", error);
       toast.error("Something went wrong. Please try again.");
     }
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>
+  ): void => {
+    setter(e.target.value);
   };
 
   return (
@@ -73,7 +86,7 @@ const Signup = () => {
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => handleInputChange(e, setEmail)}
             placeholder="Enter Email Address"
             className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -84,7 +97,7 @@ const Signup = () => {
           <input
             type="tel"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => handleInputChange(e, setPhone)}
             placeholder="Enter Phone Number"
             className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -95,7 +108,7 @@ const Signup = () => {
           <input
             type={showPassword ? "text" : "password"}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => handleInputChange(e, setPassword)}
             placeholder="Set New Password"
             className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -109,13 +122,15 @@ const Signup = () => {
         </div>
 
         <div className="mb-6 relative">
-          <label className="block text-sm font-medium mb-1">Confirm Password</label>
+          <label className="block text-sm font-medium mb-1">
+            Confirm Password
+          </label>
           <input
             type={showConfirmPassword ? "text" : "password"}
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(e) => handleInputChange(e, setConfirmPassword)}
             placeholder="Confirm Password"
-            className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 "
+            className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
             type="button"
