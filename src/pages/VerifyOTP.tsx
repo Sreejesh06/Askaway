@@ -1,24 +1,28 @@
-// VerifyOTP.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-interface LocationState {
-  email: string;
-}
 
 interface VerifyOTPResponse {
   message?: string;
   error?: string;
 }
 
+const OTP_EXPIRY_TIME = 300; // 5 minutes
+const STORAGE_KEY = "otp_expiry_timestamp";
+const EMAIL_STORAGE_KEY = "otp_verification_email"; // New key for storing email
+
 const VerifyOTP: React.FC = () => {
   const [otp, setOtp] = useState<string>('');
-  const [timeLeft, setTimeLeft] = useState<number>(120); // 2 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState<number>(OTP_EXPIRY_TIME);
+  const [isVerified, setIsVerified] = useState<boolean>(false);
+  const [isResending, setIsResending] = useState<boolean>(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const email = (location.state as LocationState)?.email;
+  
+  // Retrieve email from state or localStorage
+  const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY);
+  const email = (location.state as { email: string })?.email || storedEmail;
 
   useEffect(() => {
     if (!email) {
@@ -26,28 +30,50 @@ const VerifyOTP: React.FC = () => {
       return;
     }
 
+    // Store email in localStorage if not already stored
+    if (!storedEmail) {
+      localStorage.setItem(EMAIL_STORAGE_KEY, email);
+    }
+
+    const preventBackNavigation = () => {
+      window.history.pushState(null, "", window.location.href);
+    };
+
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", preventBackNavigation);
+
+    const storedExpiry = localStorage.getItem(STORAGE_KEY);
+    const currentTime = Math.floor(Date.now() / 1000);
+
+    if (storedExpiry) {
+      const expiryTime = parseInt(storedExpiry, 10);
+      const remainingTime = expiryTime - currentTime;
+      setTimeLeft(remainingTime > 0 ? remainingTime : 0);
+    } else {
+      const expiryTime = currentTime + OTP_EXPIRY_TIME;
+      localStorage.setItem(STORAGE_KEY, expiryTime.toString());
+    }
+
     const timer = setInterval(() => {
-      setTimeLeft((prevTime: number) => {
+      setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
           clearInterval(timer);
+          localStorage.removeItem(STORAGE_KEY);
           return 0;
         }
         return prevTime - 1;
       });
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("popstate", preventBackNavigation);
+    };
   }, [email, navigate]);
 
-  const formatTime = (seconds: number): string => {
-    const mins: number = Math.floor(seconds / 60);
-    const secs: number = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const handleVerify = async (): Promise<void> => {
-    if (!otp) {
-      toast.error('Please enter the OTP');
+    if (!otp || otp.length !== 6) {
+      toast.error('Please enter a valid 6-digit OTP');
       return;
     }
 
@@ -57,36 +83,25 @@ const VerifyOTP: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email,
-          otp,
-        }),
+        body: JSON.stringify({ email, otp }),
       });
 
       const data: VerifyOTPResponse = await response.json();
 
       if (response.ok) {
         toast.success('Email verified successfully! Redirecting to login...');
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(EMAIL_STORAGE_KEY); // Clear email on success
+        setIsVerified(true);
         setTimeout(() => navigate('/'), 2000);
       } else {
-        toast.error(data.error || 'Verification failed');
+        toast.error(data.error || 'Invalid OTP. Please try again.');
       }
     } catch (error) {
       console.error('Error verifying OTP:', error);
       toast.error('Something went wrong. Please try again.');
     }
   };
-
-  const handleOTPChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const value = e.target.value.replace(/\D/g, '');
-    setOtp(value);
-  };
-
-  const buttonClassName: string = `w-full py-3 rounded-lg text-lg font-semibold mb-4 ${
-    timeLeft === 0
-      ? 'bg-gray-500 cursor-not-allowed'
-      : 'bg-blue-500 hover:bg-blue-600'
-  }`;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white">
@@ -99,43 +114,37 @@ const VerifyOTP: React.FC = () => {
             type="text"
             maxLength={6}
             value={otp}
-            onChange={handleOTPChange}
+            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
             placeholder="Enter 6-digit OTP"
             className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <p className="text-sm text-gray-400 mt-2">
-            Time remaining: {formatTime(timeLeft)}
+            Time remaining: {timeLeft}s
           </p>
         </div>
 
         <button
           onClick={handleVerify}
-          disabled={timeLeft === 0}
-          className={buttonClassName}
+          disabled={timeLeft === 0 || otp.length !== 6}
+          className={`w-full py-3 rounded-lg text-lg font-semibold mb-4 ${
+            timeLeft === 0 || otp.length !== 6
+              ? 'bg-gray-500 cursor-not-allowed'
+              : 'bg-blue-500 hover:bg-blue-600'
+          }`}
         >
           Verify OTP
         </button>
 
         {timeLeft === 0 && (
-          <p className="text-center text-red-400">
-            OTP has expired. Please sign up again.
-          </p>
+          <div className="text-center">
+            <p className="text-red-400">OTP has expired.</p>
+          </div>
         )}
       </div>
 
-      <ToastContainer
-        position="top-center"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
+      <ToastContainer />
     </div>
   );
 };
 
-export default VerifyOTP; 
+export default VerifyOTP;

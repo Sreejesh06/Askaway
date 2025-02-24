@@ -30,7 +30,7 @@ func generateOTP() string {
 func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(bytes), err
-}
+} 
 
 func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 	type OTPRequest struct {
@@ -40,34 +40,44 @@ func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 
 	var req OTPRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println("❌ Invalid request body:", err)
 		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
 		return
 	}
 
+	log.Println("🔍 Received request:", req)
+
 	var dbOTP string
 	var isVerified bool
-	if err := db.DB.QueryRow("SELECT otp, is_verified FROM users WHERE email=$1", req.Email).Scan(&dbOTP, &isVerified); err != nil {
+	err := db.DB.QueryRow("SELECT otp, is_verified FROM users WHERE email=$1", req.Email).Scan(&dbOTP, &isVerified)
+	if err != nil {
+		log.Println("❌ Error querying database:", err)
 		http.Error(w, `{"error": "Invalid email or OTP"}`, http.StatusUnauthorized)
 		return
 	}
 
 	if dbOTP != req.OTP {
+		log.Println("❌ OTP does not match")
 		http.Error(w, `{"error": "Invalid OTP"}`, http.StatusUnauthorized)
 		return
 	}
 
-	_, err := db.DB.Exec("UPDATE users SET is_verified=true WHERE email=$1", req.Email)
+	_, err = db.DB.Exec("UPDATE users SET is_verified=true WHERE email=$1", req.Email)
 	if err != nil {
+		log.Println("❌ Database error:", err)
 		http.Error(w, `{"error": "Database error"}`, http.StatusInternalServerError)
 		return
 	}
 
+	response := map[string]string{"message": "OTP verified successfully"}
+	jsonResponse, _ := json.Marshal(response)
+	log.Println("✅ Sending response:", string(jsonResponse))
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "OTP verified successfully",
-	})
+	w.Write(jsonResponse)
 }
+
 
 func sendOTPByEmail(email, otp string) error {
 	smtpHost := "smtp.gmail.com"
