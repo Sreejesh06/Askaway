@@ -58,9 +58,11 @@ Welcome to **Askaway**! This platform is designed to help students connect with 
 
 ### Frontend
 
-1. Navigate to the frontend directory:
+> The frontend is located directly in the root of this repository.
+
+1.  Navigate to the project root (if not already):
    ```bash
-   cd frontend
+   cd Askaway
    ```
 2. Install dependencies:
    ```bash
