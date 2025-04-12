@@ -1,15 +1,24 @@
 package handlers
 
 import (
+	"backend/db"
 	"encoding/json"
 	"log"
 	"math/rand"
 	"net/http"
 	"net/smtp"
+	"os"
 	"time"
+
+	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
-	"backend/db"
 )
+
+func init() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("❌ Error loading .env file:", err)
+	}
+}
 
 type User struct {
 	Email    string `json:"email"`
@@ -30,7 +39,7 @@ func generateOTP() string {
 func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(bytes), err
-} 
+}
 
 func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 	type OTPRequest struct {
@@ -78,12 +87,11 @@ func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 
-
 func sendOTPByEmail(email, otp string) error {
-	smtpHost := "smtp.gmail.com"
-	smtpPort := "587"
-	senderEmail := "pavankhalyan.s2022ece@sece.ac.in"
-	senderPassword := "secesece" // WARNING: Consider using environment variables instead of hardcoding credentials.
+	smtpHost := os.Getenv("SMTP_HOST")
+	smtpPort := os.Getenv("SMTP_PORT")
+	senderEmail := os.Getenv("SENDER_EMAIL")
+	senderPassword := os.Getenv("SENDER_PASSWORD")
 
 	auth := smtp.PlainAuth("", senderEmail, senderPassword, smtpHost)
 
