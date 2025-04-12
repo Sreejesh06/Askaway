@@ -25,3 +25,4 @@ dist-ssr
 frontend/*.exe
 backend/*.exe
 *.exe
+.env
